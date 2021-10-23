@@ -1,0 +1,63 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Crimson+Text:ital@0;1&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Lora:ital@0;1&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Work+Sans:ital,wght@0,300;0,400;0,500;1,300;1,400;1,500&display=swap');
+
+body {
+  font-family: 'Work Sans', 'Segoe UI', 'Roboto', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue','sans-serif';
+}
+.el-row {
+  display: flex;
+  flex-direction: row;
+
+}
+
+  .el-icon {
+    flex: 0 0 auto;
+    width: 30px;
+    height: 20px;
+  }
+
+  .el-input {   /* wrap */
+    flex: 1 0;
+    display: grid;
+  }
+
+      .el-input::after {
+        content: attr(data-replicated-value) " ";
+        white-space: pre-wrap;
+        visibility: hidden;
+      }
+
+      .el-input textarea {
+        /* box-sizing: border-box; */
+        resize: none;
+        overflow: hidden;
+      }
+
+      .el-input > textarea,
+      .el-input::after {
+        padding: 0px;
+        font: inherit;
+        word-wrap: break-word;
+        grid-area: 1 / 1 / 2 / 2;
+      }
+
+        .el-input textarea:focus {
+          outline: none;
+        }
+
+    .el-input input {
+      width: 100%;
+    }
+
+  .el-type {
+    flex: 0 0 auto;
+    width: 40px;
+  }
+
+
+/* ---- */
