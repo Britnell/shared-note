@@ -142,6 +142,25 @@ export default function Note({note}){
     },[content])
 
 
+    const share = ()=>{
+        if ("share" in navigator){  
+            // app share
+            navigator.share({
+                title: 'Shared Note',
+                text: `Here's a shared note for us`,
+                url: window.location.href,
+              })
+              .then(() => console.log('Successful share'))
+              .catch(error => console.log('Error sharing:', error));
+        }
+        else {  
+            // clipboard
+            navigator.clipboard.writeText(window.location.href)
+            .then(() => console.log('copy success '))
+            .catch(err => console.log('copy failed ' + err ));
+        }
+
+    }
     
     return (
         <div className="container flex flex-col h-screen">
@@ -150,12 +169,17 @@ export default function Note({note}){
             
             <main className="flex-1 bg-blue-100">
                 
-                <div className="flex flex-row-reverse">
+                <div className="flex  justify-between mx-2 mt-2 ">
                     <button 
-                        className=" w-28 py-1 mx-2 mt-2 bg-gray-100 rounded-lg shadow-md disabled:opacity-50 "
+                        className=" w-28 py-1 bg-gray-100 rounded-lg shadow-md disabled:opacity-50 "
                         ref={saveRef} 
                         onClick={manualsave} 
                         >Save</button>
+                    
+                    <button 
+                        className=" w-24 py-1 bg-blue-200 rounded-lg "
+                        onClick={share}
+                        >Share</button>
                 </div>
                 
                 <div className="" >
