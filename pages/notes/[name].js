@@ -57,7 +57,7 @@ function Element({data, id, focus, dispatch, }){  // eee
     if(data.type==='text')
         icon = <div></div>
     else if(data.type==='list')  // ∙ • ○ ‣ ⁃ ⚫ ⚪ ⁌ ⁍ ➼ 
-        icon = <div className="w-6 flex items-center justify-center ">'•'</div>
+        icon = <div className="w-6 flex items-center justify-center ">•</div>
     else if(data.type==='todo')
         icon = (
             <div className="w-6 flex items-center justify-center ">
