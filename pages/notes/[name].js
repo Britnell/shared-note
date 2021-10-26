@@ -2,40 +2,50 @@ import React from 'react'
 import db from '../../lib/db'
 import { apiPost } from '../../lib/api'
 
+import { usePopper } from 'react-popper';
+import react from 'react';
 
-function Element({id, data, onChange, addNew, focus }){  // data = { type, text} 
-    const [input,setInput] = React.useState(data.text)
+
+function Element({data, id, focus, dispatch, }){  // eee
 
     const inputRef = React.useRef()
     const wrapRef = React.useRef()
 
-    const changeType = (ev)=>{
-        if(data.type==='text')
-            onChange(id,{...data,type: 'list'}) 
-        else if(data.type==='list')
-            onChange(id,{...data,type: 'todo', done: false })
-        else 
-            onChange(id,{...data,type: 'text'})
-    }
+    // React.useEffect(()=>{
 
     const keyDown = (ev)=>{
         if(ev.keyCode===13){    // enter key - add new
             ev.preventDefault()
-            addNew({ type: data.type, id})
+            dispatch({ type:'insert', value:{ id, type: data.type } })
+        }
+        else if(ev.keyCode===8){
+            if( data.text.length===0 ){
+                dispatch({type:'delete', value: {id} })
+            }
         }
     }
 
-    const updateArea = (ev)=>{
-        let area = ev.target
-        setInput(area.value)
-        onChange(id,{...data, text: area.value  })
+    const onChange = (ev)=>{
+        dispatch({type: 'text',value:{ id, text: ev.target.value }})
+    }
+    const changeType = (ev)=>{
+        if(data.type==='text')
+            dispatch({type:'type',value:{ id, type:'list'}})    
+        else if(data.type==='list')
+            dispatch({type:'type',value:{ id, type:'todo'}})    
+        else 
+            dispatch({type:'type',value:{ id, type:'text'}})    
+    }
+
+    const todoInput = (ev)=>{
+        dispatch({type:'todo',value: { id, done: ev.target.checked } })
     }
 
     
     // focus 
     React.useEffect(()=>{   
-        if(id===focus)     inputRef.current.focus()
-    },[focus])
+        if(focus===id)     inputRef.current.focus()
+    },[focus,id])
 
     // * update text-div-twin
     const onTextInput = ()=>{
@@ -45,30 +55,32 @@ function Element({id, data, onChange, addNew, focus }){  // data = { type, text}
 
     var icon;
     if(data.type==='text')
-        icon = ''
+        icon = <div></div>
     else if(data.type==='list')  // ∙ • ○ ‣ ⁃ ⚫ ⚪ ⁌ ⁍ ➼ 
-        icon = '•'
+        icon = <div className="w-6 flex items-center justify-center ">'•'</div>
     else if(data.type==='todo')
-        icon = (<input type="checkbox" value={data.done}></input>)
+        icon = (
+            <div className="w-6 flex items-center justify-center ">
+                <input type="checkbox" onChange={todoInput} checked={data.done} />
+            </div>)
 
     const inputField = (<textarea 
-        className=" "
+        className=""
         rows={1} 
         onInput={onTextInput} 
         ref={inputRef} 
-        value={input} 
-        onChange={updateArea} 
+        value={data.text} 
+        onChange={onChange} 
         onKeyDown={(ev)=>{ if(data.type!=='text')  keyDown(ev)     }}
     />)
 
 
     return (
         <div className="el-row bg-white rounded-lg shadow-md m-2 overflow-hidden ">            
-            <div className="w-6 flex items-center justify-center ">
-                {icon}
-            </div>
+            
+            {icon}
 
-            <div ref={wrapRef} className="el-input py-1 ">
+            <div ref={wrapRef} className="el-input py-1 px-2">
                 {inputField} 
             </div>
             <div className="el-type bg-gray-100 flex items-center justify-center">
@@ -79,67 +91,107 @@ function Element({id, data, onChange, addNew, focus }){  // data = { type, text}
 }
 
 
+function noteReducer(state,action){ //rrr
+    let next = {...state} , i, el
+    switch(action.type){
+        case 'add':
+            i = state.content[state.content.length-1]
+            next.content = [...state.content,{
+                key: state.keys,
+                type: i? i.type : 'text',
+                text: '',
+                done: false,
+            }]
+            next.focus = next.content.length-1
+            next.keys++;
+            return next;
+        case 'insert':
+            i = action.value.id+1
+            el = {   
+                key: state.keys,
+                type: action.value.type,     
+                text: '',
+                done: false,
+            }
+            next.content = [
+                ...state.content.slice(0,i),
+                el,
+                ...state.content.slice(i),
+            ]
+            next.focus = i
+            next.keys++;
+            return next;
+        case 'text': 
+            next.content[action.value.id].text = action.value.text
+            return next
+        case 'type':
+            next.content[action.value.id].type = action.value.type
+            return next
+        case 'todo':
+            next.content[action.value.id].done = action.value.done
+            return next;
+        case 'delete':
+            i = action.value.id
+            next.content = [
+                ...state.content.slice(0,i),
+                ...state.content.slice(i+1)
+            ]
+            next.focus = i
+            if(next.focus>=next.content.length)    
+                next.focus = next.content.length-1
+            return next;
+        default:
+            return next;
+    }
+}
+
+function initReducer(note){    
+    let max = 0
+    for(let i in note.content){
+        if(note.content[i].key>max) max = note.content[i].key
+    }
+    note.keys = max+1
+    note.focus = note.content.length-1
+    return note
+}
+
+function Empty(){
+
+    return (<div> NOTE NOT FOUND </div>)
+}
 
 export default function Note({note}){
 
-    const [content,setContent] = React.useState(note.content)
-    const [focus,setFocus] = React.useState(0)
+    if(!note)        return <Empty />
 
-    // console.log(' <Note ', content )
+    const [state,dispatch] = React.useReducer(noteReducer,initReducer(note) )
     
-    const add = ()=>{
-        setFocus(content.length)
-        setContent([...content,{
-            type:content[focus].type,
-            text:'', 
-            id: content.length 
-        }])
-    }
-
-    const elementChange = (id,data)=>{
-        let _content = [...content]
-        _content[id] = data
-        setContent(_content)
-    }
-
-    
-    const addNew = ({type,id})=>{
-        setFocus(content.length)
-        let _content = [ ...content.slice(0,id+1), {type,text:'',id: content.length}, ...content.slice(id+1) ]
-        setFocus(id+1)
-        setContent(_content)
-    }
-
     const saveRef = React.useRef()
-
-    function autosave(){
-        // saveRef.current.textContent = 'auto-saving'
-        saveRef.current.disabled = true
-        save()
-    }
-    function manualsave(){
-        // saveRef.current.textContent = 'saving'
-        saveRef.current.disabled = true
-        save()
-    }
-    function hasChanged(){
-        saveRef.current.textContent = 'save'
-        saveRef.current.disabled = false
-    }
+    
+    // console.log(state.content )
+    
+    const addClick = ()=> dispatch({type:'add',value:'text'})
+    
+    // * Save
 
     function save(){
-        apiPost('/api/update',{ id: note.id, content })
+        saveRef.current.disabled = true
+        apiPost('/api/update',{ 
+            id: note.id, 
+            content: state.content 
+        })
         .then(res=>{
             saveRef.current.textContent = 'saved'
             saveRef.current.disabled = true
         })
     }
 
-    React.useEffect(()=>{   
-        hasChanged()
-        const timer = setTimeout(autosave , 1000)
+    React.useEffect(()=>{
+        saveRef.current.textContent = 'save'
+        saveRef.current.disabled = false
+        const timer = setTimeout(save , 1600)
         return ()=> clearTimeout(timer)
-    },[content])
+    },[state])
 
 
     const share = ()=>{
@@ -173,29 +225,29 @@ export default function Note({note}){
                     <button 
                         className=" w-28 py-1 bg-gray-100 rounded-lg shadow-md disabled:opacity-50 "
                         ref={saveRef} 
-                        onClick={manualsave} 
-                        >Save</button>
+                        onClick={save} 
+                    >Save</button>
                     
                     <button 
                         className=" w-24 py-1 bg-blue-200 rounded-lg "
                         onClick={share}
-                        >Share</button>
+                    >Share</button>
+
                 </div>
                 
                 <div className="" >
-                    {content.map((el,id)=> (
+                    {state.content.map((el,id)=> (
                         <Element 
-                            key={el.id} 
-                            id={id} 
+                            key={el.key}
+                            id={id}
                             data={el} 
-                            onChange={elementChange} 
-                            addNew={addNew}
-                            focus={focus}
+                            dispatch={dispatch}
+                            focus={state.focus}
                         />))}
                 </div>
                 <div className="flex justify-center">
-                    <button className=" w-32 py-1 text-xl   bg-white rounded-lg shadow-md "
-                        onClick={add}>+</button>
+                    <button className=" w-32 py-1 text-xl bg-white rounded-lg shadow-md "
+                        onClick={addClick}>+</button>
                 </div>
             </main>
         </div>
@@ -204,13 +256,16 @@ export default function Note({note}){
 
 export async function getServerSideProps(context) {
     let name = context.query.name 
-    let passkey = context.query.k
+    let passkey = context.query.key
     let note = await db.findNote({name,passkey})
+    if(!note || !passkey)       return { props: { note: {name} } }
+    if(!note.passkey===passkey) return { props: { note: {name} } }
+    // let password = context.query.password
+    // console.log(note, name, passkey, password )
     try {
-        let json = JSON.parse(note.content)
-        note.content = json
+        note.content = JSON.parse(note.content)
     } catch(e){
-        console.log(' ERROR parsing note content json ', e)
+        note.content = {}
     }
     return {
       props: {  note, }, 
