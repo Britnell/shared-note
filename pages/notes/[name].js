@@ -215,12 +215,13 @@ export default function Note({note}){
     }
     
     return (
-        <div className="container flex flex-col h-screen">
+        <div className="flex flex-col h-screen">
             <header className=" font-serif italic text-xl py-6 text-center bg-blue-300   "
                 >{note.name}</header>
             
             <main className="flex-1 bg-blue-100">
-                
+            <div className="max-w-lg mx-auto ">
+
                 <div className="flex  justify-between mx-2 mt-2 ">
                     <button 
                         className=" w-28 py-1 bg-gray-100 rounded-lg shadow-md disabled:opacity-50 "
@@ -246,9 +247,11 @@ export default function Note({note}){
                         />))}
                 </div>
                 <div className="flex justify-center">
-                    <button className=" w-32 py-1 text-xl bg-white rounded-lg shadow-md "
+                    <button className=" w-full h-8 py-1 my-4 mx-2 text-xl bg-blue-200 rounded-lg shadow-md "
                         onClick={addClick}>+</button>
                 </div>
+
+            </div>
             </main>
         </div>
     )
